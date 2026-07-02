@@ -16,3 +16,13 @@ Known Bugs
 2.  Unzip the Compressed FIle
 3.  Click on applicationbrowser.exe
 4.  Wait for a few seconds (might take a while because its a html app)
+---
+# Demo
+> Recommeded to be used
+ 1. Just go to https://debugofthe67.github.io/portablebrowser-html/
+
+ > [!NOTE]
+>  It might not function properly because of x frame options.
+> To Fix this, you might need to install a x-frame-bypass extension like https://chromewebstore.google.com/detail/ignore-x-frame-headers/gleekbfjekiniecknbkamfmkohkpodhe for Chrome or https://microsoftedge.microsoft.com/addons/detail/allow-xframeoptions/didlaemnndoppgpmmoglkcmaoghlicdp for Edge
+>
+---
