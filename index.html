@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Browser</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body, html { width: 100%; height: 100%; overflow: hidden; font-family: "Segoe UI", Tahoma, sans-serif; background: #dee1e6; color: #000; }
+  
+  /* Top Chrome Titlebar & Tabs Area */
+  #top-container { position: absolute; top: 0; left: 0; width: 100%; height: 82px; background: #dee1e6; z-index: 10; display: flex; flex-direction: column; }
+  
+  /* Real Chrome Tab Strip Layout */
+  #tab-strip { display: flex; align-items: flex-end; height: 42px; padding-left: 8px; padding-right: 8px; overflow: hidden; }
+  
+  .tab { 
+    display: flex; align-items: center; height: 34px; background: transparent; 
+    position: relative; padding: 0 20px; font-size: 12px; color: #4a4a4a; 
+    min-width: 140px; max-width: 200px; cursor: pointer; border: none; margin-right: -10px;
+  }
+  /* Tab background curves simulating Chrome shape */
+  .tab-bg {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: transparent;
+    border-radius: 8px 8px 0 0; transform: perspective(5px) rotateX(1deg); transform-origin: bottom; z-index: 1;
+  }
+  .tab:hover .tab-bg { background: #e8eaed; }
+  .tab.active { z-index: 5; color: #1a73e8; }
+  .tab.active .tab-bg { background: #ffffff; }
+  
+  .tab-text { position: relative; z-index: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-grow: 1; padding-right: 5px; }
+  .close-tab { position: relative; z-index: 2; font-size: 14px; color: #5f6368; width: 16px; height: 16px; line-height: 14px; text-align: center; border-radius: 50%; font-weight: bold; }
+  .close-tab:hover { background: #dadce0; color: #3c4043; }
+  .tab.active .close-tab:hover { background: #e8eaed; }
+
+  /* Plus button like Chrome */
+  #new-tab-btn { 
+    width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; 
+    font-size: 18px; color: #5f6368; cursor: pointer; display: flex; align-items: center; 
+    justify-content: center; margin-left: 12px; margin-bottom: 3px; z-index: 10;
+  }
+  #new-tab-btn:hover { background: #d0d3d8; color: #3c4043; }
+
+  /* Chrome Navigation Toolbar Base */
+  #toolbar { 
+    display: flex; align-items: center; gap: 8px; height: 40px; 
+    background: #ffffff; padding: 0 10px; border-bottom: 1px solid #chchch; border-top: 1px solid #ffffff; z-index: 9;
+  }
+  
+  /* Circular Chrome Buttons */
+  .nav-btn { 
+    width: 28px; height: 28px; border-radius: 50%; border: none; 
+    background: transparent; font-size: 16px; color: #5f6368; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover { background: #f1f3f4; color: #3c4043; }
+  
+  /* Modern Omnibox / Address Bar */
+  #omnibox-wrapper { flex-grow: 1; position: relative; display: flex; align-items: center; }
+  #url-input { 
+    width: 100%; height: 28px; padding: 0 16px; border: none; 
+    background: #f1f3f4; color: #202124; border-radius: 14px; font-size: 13px; outline: none; 
+  }
+  #url-input:focus { background: #ffffff; box-shadow: 0 1px 3px rgba(32,33,36,.28); border: 1px solid #e8eaed; height: 28px; padding: 0 15px; }
+
+  /* Perfected Document Frame Placement */
+  #viewports { position: absolute; top: 82px; left: 0; right: 0; bottom: 0; background: #fff; width: 100%; height: calc(100% - 82px); }
+  iframe { width: 100%; height: 100%; border: none; display: none; background: #fff; visibility: hidden; }
+  iframe.active { display: block; visibility: visible; }
+
+  /* Recent history dropdown styled like Chrome menu */
+  #recent-panel { display: none; position: absolute; top: 34px; right: 10px; width: 280px; background: #ffffff; border: 1px solid #dadce0; border-radius: 8px; padding: 8px; z-index: 100; box-shadow: 0px 4px 12px rgba(0,0,0,0.15); }
+  .recent-title { font-size: 12px; font-weight: bold; padding: 4px 8px 8px 8px; border-bottom: 1px solid #f1f3f4; color: #5f6368; display: block; }
+  #recent-list { max-height: 200px; overflow-y: auto; margin-top: 4px; }
+  .recent-item { padding: 8px; cursor: pointer; border-radius: 4px; font-size: 12px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-item:hover { background: #f1f3f4; }
+</style>
+<script>
+  var tabs = []; var recentTabs = []; var activeTabId = null; var tabCounter = 0;
+  function init() { createNewTab("https://google.com"); }
+  
+  function createNewTab(url) {
+    if (!url) url = "https://google.com"; tabCounter++; var tabId = "tab-" + tabCounter;
+    var viewports = document.getElementById("viewports"); var iframe = document.createElement("iframe");
+    iframe.id = "frame-" + tabId; iframe.src = url; viewports.appendChild(iframe);
+    tabs.push({ id: tabId, url: url }); renderTabs(); switchTab(tabId);
+  }
+  
+  function renderTabs() {
+    var strip = document.getElementById("tab-strip");
+    // Clear everything except the "+" button
+    var btn = document.getElementById("new-tab-btn");
+    strip.innerHTML = "";
+    
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i]; var tabEl = document.createElement("div");
+      tabEl.className = "tab" + (t.id === activeTabId ? " active" : ""); tabEl.id = "strip-" + t.id;
+      
+      var bg = document.createElement("div"); bg.className = "tab-bg"; tabEl.appendChild(bg);
+      
+      var displayUrl = t.url.replace(/^https?:\/\/(www\.)?/, "");
+      var txtNode = document.createElement("span"); txtNode.className = "tab-text"; txtNode.innerHTML = displayUrl;
+      tabEl.appendChild(txtNode);
+      
+      tabEl.onclick = (function(id) { return function() { switchTab(id); }; })(t.id);
+      
+      var closeBtn = document.createElement("span"); closeBtn.className = "close-tab"; closeBtn.innerHTML = "&times;";
+      closeBtn.onclick = (function(id) { return function(e) { if (!e) var e = window.event; e.cancelBubble = true; if (e.stopPropagation) e.stopPropagation(); closeTab(id); }; })(t.id);
+      
+      tabEl.appendChild(closeBtn); strip.appendChild(tabEl);
+    }
+    strip.appendChild(btn);
+  }
+  
+  function switchTab(tabId) {
+    activeTabId = tabId; var iframes = document.getElementById("viewports").getElementsByTagName("iframe");
+    for (var i = 0; i < iframes.length; i++) { iframes[i].className = (iframes[i].id === "frame-" + tabId) ? "active" : ""; }
+    for (var j = 0; j < tabs.length; j++) { if (tabs[j].id === tabId) { document.getElementById("url-input").value = tabs[j].url; break; } }
+    renderTabs();
+  }
+  
+  function closeTab(tabId) {
+    for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === tabId) { recentTabs.unshift(tabs[i].url); if (recentTabs.length > 10) recentTabs.pop(); tabs.splice(i, 1); break; } }
+    var frame = document.getElementById("frame-" + tabId); if (frame) frame.parentNode.removeChild(frame);
+    if (activeTabId === tabId && tabs.length > 0) { activeTabId = tabs[tabs.length - 1].id; } else if (tabs.length === 0) { activeTabId = null; document.getElementById("url-input").value = ""; }
+    renderTabs(); if (activeTabId) switchTab(activeTabId); renderRecentMenu();
+  }
+  
+  function navigate() {
+    if (!activeTabId) { createNewTab(document.getElementById("url-input").value); return; }
+    var url = document.getElementById("url-input").value; if (!url.match(/^https?:\/\//i)) { url = "https://" + url; }
+    for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === activeTabId) { tabs[i].url = url; document.getElementById("frame-" + activeTabId).src = url; break; } }
+    renderTabs();
+  }
+  
+  function refreshTab() {
+    if (activeTabId) { var frame = document.getElementById("frame-" + activeTabId); if (frame) frame.src = frame.src; }
+  }
+  
+  function toggleRecentPanel() { var p = document.getElementById("recent-panel"); p.style.display = (p.style.display === "block") ? "none" : "block"; renderRecentMenu(); }
+  function renderRecentMenu() {
+    var container = document.getElementById("recent-list"); container.innerHTML = "";
+    if (recentTabs.length === 0) { container.innerHTML = "<div style='color:#757575;padding:6px;font-size:12px;'>No recently closed tabs</div>"; return; }
+    for (var i = 0; i < recentTabs.length; i++) {
+      var item = document.createElement("div"); item.className = "recent-item"; item.innerHTML = recentTabs[i];
+      item.onclick = (function(url) { return function() { createNewTab(url); toggleRecentPanel(); }; })(recentTabs[i]);
+      container.appendChild(item);
+    }
+  }
+</script>
+</head>
+<body onload="init()">
+  <div id="top-container">
+    <!-- Chrome style top tab section -->
+    <div id="tab-strip">
+      <button id="new-tab-btn" onclick="createNewTab()">+</button>
+    </div>
+    
+    <!-- Chrome style navigation toolbar -->
+    <div id="toolbar">
+      <button class="nav-btn" title="Back" style="font-size:18px;">←</button>
+      <button class="nav-btn" title="Forward" style="font-size:18px;">→</button>
+      <button class="nav-btn" onclick="refreshTab()" title="Reload">⟳</button>
+      <div id="omnibox-wrapper">
+        <input type="text" id="url-input" onkeydown="if(event.keyCode==13) navigate();" placeholder="Search Google or type a URL">
+        <div id="recent-panel"><span class="recent-title">Recently Closed</span><div id="recent-list"></div></div>
+      </div>
+      <button class="nav-btn" onclick="toggleRecentPanel()" title="History" style="font-size:20px;">⋮</button>
+    </div>
+  </div>
+  
+  <!-- Content Display Area -->
+  <div id="viewports"></div>
+</body>
+</html>
